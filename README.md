@@ -31,10 +31,8 @@ pip install numpy matplotlib
 python3 direction_finder.py
 ```
 
-Or just open `direction_finder_demo.html` in a browser — no install needed.
+**Try the live demo:** https://songcm2027.github.io/directional-hearing/direction_finder_demo.html
 
 ## Author
 
 Chaemin Song — high-school student, Daejeon, South Korea. Work in progress; feedback and collaboration welcome.
-
-**Try the live demo:** https://songcm2027.github.io/directional-hearing/direction_finder_demo.html
