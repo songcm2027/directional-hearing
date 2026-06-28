@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Directional hearing — interactive demo</title>
+<style>
+  :root{--bg:#faf9f6;--surface:#ffffff;--text:#1c1c1a;--muted:#5f5e5a;--border:rgba(0,0,0,0.12);--coral:#D85A30;--blue:#1f7ae0;}
+  @media (prefers-color-scheme: dark){:root{--bg:#1c1c1a;--surface:#262624;--text:#f3f2ef;--muted:#a8a7a1;--border:rgba(255,255,255,0.16);--coral:#e8703f;--blue:#5aa0ee;}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.6;padding:2rem 1rem;}
+  .wrap{max-width:640px;margin:0 auto;}
+  h1{font-size:24px;font-weight:600;margin:0 0 .25rem;}
+  .sub{color:var(--muted);font-size:15px;margin:0 0 1.5rem;}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.25rem;}
+  .cue{text-align:center;font-size:22px;font-weight:600;color:var(--blue);margin:.25rem 0 1rem;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .controls{display:flex;align-items:center;gap:12px;margin-bottom:1.25rem;}
+  button.play{width:44px;height:36px;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  button.play:hover{background:var(--bg);}
+  label{font-size:14px;color:var(--muted);}
+  input[type=range]{flex:1;accent-color:var(--blue);}
+  .angv{font-size:14px;font-weight:600;min-width:46px;text-align:right;}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;}
+  .mc{background:var(--bg);border-radius:10px;padding:.75rem 1rem;}
+  .mc .l{font-size:13px;color:var(--muted);}
+  .mc .v{font-size:24px;font-weight:600;}
+  .legend{display:flex;gap:18px;justify-content:center;margin-top:1rem;font-size:13px;color:var(--muted);flex-wrap:wrap;}
+  .legend span{display:flex;align-items:center;gap:6px;}
+  .foot{color:var(--muted);font-size:13px;margin-top:1.25rem;text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Directional hearing — interactive demo</h1>
+  <p class="sub">Two earbud microphones, one applied-math idea: work out which direction a sound comes from. Drag the slider, or press play to watch a sound move.</p>
+  <div class="panel">
+    <svg viewBox="0 0 380 250" width="100%" style="max-width:420px;display:block;margin:0 auto" role="img" aria-label="Top-down view of a head with two earbuds, the true sound source, and the estimated direction.">
+      <defs><marker id="ah" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" style="fill:var(--blue)"/></marker></defs>
+      <circle cx="190" cy="125" r="100" style="fill:none;stroke:var(--border)" stroke-width="1.5"/>
+      <text x="190" y="16" text-anchor="middle" style="fill:var(--muted)" font-size="11">front</text>
+      <text x="190" y="243" text-anchor="middle" style="fill:var(--muted)" font-size="11">behind</text>
+      <line id="trueline" x1="190" y1="125" x2="190" y2="25" style="stroke:var(--border)" stroke-width="1.5" stroke-dasharray="3 3"/>
+      <line id="est" x1="190" y1="125" x2="190" y2="37" style="stroke:var(--blue)" stroke-width="3" marker-end="url(#ah)"/>
+      <circle cx="190" cy="125" r="26" style="fill:var(--bg);stroke:var(--border)" stroke-width="1.5"/>
+      <circle cx="170" cy="125" r="5" style="fill:var(--muted)"/>
+      <circle cx="210" cy="125" r="5" style="fill:var(--muted)"/>
+      <text x="165" y="146" style="fill:var(--muted)" font-size="11">L</text>
+      <text x="207" y="146" style="fill:var(--muted)" font-size="11">R</text>
+      <circle id="src" cx="190" cy="25" r="10" style="fill:var(--coral)"/>
+    </svg>
+    <div class="cue" id="cue"></div>
+    <div class="controls">
+      <button class="play" id="play" aria-label="Play"></button>
+      <label for="ang">sound direction</label>
+      <input id="ang" type="range" min="-90" max="90" value="35" step="1">
+      <span class="angv" id="angv">+35°</span>
+    </div>
+    <div class="cards">
+      <div class="mc"><div class="l">true direction</div><div class="v" id="m-true">+35°</div></div>
+      <div class="mc"><div class="l">estimated</div><div class="v" id="m-est">+35°</div></div>
+      <div class="mc"><div class="l">inter-ear delay</div><div class="v" id="m-tau">301 µs</div></div>
+      <div class="mc"><div class="l">error</div><div class="v" id="m-err">0.0°</div></div>
+    </div>
+    <div class="legend">
+      <span><span style="width:11px;height:11px;border-radius:50%;background:var(--coral)"></span>where the sound is</span>
+      <span><span style="width:11px;height:11px;border-radius:3px;background:var(--blue)"></span>what the system detects</span>
+    </div>
+  </div>
+  <p class="foot">Prototype by Chaemin Song · estimates direction from the inter-ear time delay using cross-correlation — the same idea as the Python code (GCC-PHAT).</p>
+</div>
+<script>
+(function(){
+  var C=343,D=0.18,FS=48000,N=2048;
+  var src=new Float32Array(N),nL=new Float32Array(N),nR=new Float32Array(N),nz=0.04;
+  for(var i=0;i<N;i++){src[i]=Math.random()*2-1;nL[i]=(Math.random()*2-1)*nz;nR[i]=(Math.random()*2-1)*nz;}
+  function delay(sig,dsec){var ds=dsec*FS,out=new Float32Array(N);for(var n=0;n<N;n++){var x=n-ds,i0=Math.floor(x),f=x-i0,a=(i0>=0&&i0<N)?sig[i0]:0,b=(i0+1>=0&&i0+1<N)?sig[i0+1]:0;out[n]=a*(1-f)+b*f;}return out;}
+  var maxLag=Math.ceil(D/C*FS)+2;
+  function estimate(th){var tau=D*Math.sin(th*Math.PI/180)/C,L=delay(src,tau/2),R=delay(src,-tau/2),n;
+    for(n=0;n<N;n++){L[n]+=nL[n];R[n]+=nR[n];}
+    var best=-1e18,bl=0,cm={},lag,s,m;
+    for(lag=-maxLag;lag<=maxLag;lag++){s=0;for(n=0;n<N;n++){m=n-lag;if(m>=0&&m<N)s+=L[n]*R[m];}cm[lag]=s;if(s>best){best=s;bl=lag;}}
+    var ym=cm[bl-1],yp=cm[bl+1],sh=bl;if(ym!==undefined&&yp!==undefined){var den=ym-2*best+yp;if(den!==0)sh=bl+0.5*(ym-yp)/den;}
+    var te=sh/FS,ss=Math.max(-1,Math.min(1,te*C/D));return {tauEst:te,thetaEst:Math.asin(ss)*180/Math.PI};}
+  var cx=190,cy=125,R0=100;
+  var srcEl=document.getElementById('src'),estEl=document.getElementById('est'),trueLn=document.getElementById('trueline'),cue=document.getElementById('cue'),angv=document.getElementById('angv'),ang=document.getElementById('ang');
+  var arrows={left:'<path d="M19 12 H5 M11 6 L5 12 L11 18"/>',up:'<path d="M12 19 V5 M6 11 L12 5 L18 11"/>',right:'<path d="M5 12 H19 M13 6 L19 12 L13 18"/>'};
+  function arrowSvg(dir){return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">'+arrows[dir]+'</svg>';}
+  function pol(a,r){var x=a*Math.PI/180;return [cx+r*Math.sin(x),cy-r*Math.cos(x)];}
+  function fmt(v){return (v>=0?'+':'')+Math.round(v)+'°';}
+  function update(th){var r=estimate(th),ps=pol(th,R0),pe=pol(r.thetaEst,R0-12);
+    srcEl.setAttribute('cx',ps[0]);srcEl.setAttribute('cy',ps[1]);
+    trueLn.setAttribute('x2',ps[0]);trueLn.setAttribute('y2',ps[1]);
+    estEl.setAttribute('x2',pe[0]);estEl.setAttribute('y2',pe[1]);
+    angv.textContent=fmt(th);
+    document.getElementById('m-true').textContent=fmt(th);
+    document.getElementById('m-est').textContent=fmt(r.thetaEst);
+    document.getElementById('m-tau').textContent=Math.round(r.tauEst*1e6)+' µs';
+    document.getElementById('m-err').textContent=Math.abs(r.thetaEst-th).toFixed(1)+'°';
+    var dir,w;if(r.thetaEst>10){dir='right';w='Right';}else if(r.thetaEst<-10){dir='left';w='Left';}else{dir='up';w='Ahead';}
+    cue.innerHTML=arrowSvg(dir)+'<span>'+w+'</span>';}
+  var playSvg='<svg width="16" height="16" viewBox="0 0 16 16"><path d="M4 3 L13 8 L4 13 Z" fill="currentColor"/></svg>';
+  var pauseSvg='<svg width="16" height="16" viewBox="0 0 16 16"><rect x="4" y="3" width="3" height="10" fill="currentColor"/><rect x="9" y="3" width="3" height="10" fill="currentColor"/></svg>';
+  var playing=false,raf=null,t0=null,playBtn=document.getElementById('play');
+  playBtn.innerHTML=playSvg;
+  function stop(){playing=false;if(raf)cancelAnimationFrame(raf);raf=null;playBtn.innerHTML=playSvg;playBtn.setAttribute('aria-label','Play');}
+  function frame(ts){if(!t0)t0=ts;var el=(ts-t0)/1000,th=80*Math.sin(el*0.8);ang.value=Math.round(th);update(th);raf=requestAnimationFrame(frame);}
+  ang.addEventListener('input',function(){stop();update(parseFloat(ang.value));});
+  playBtn.addEventListener('click',function(){if(playing){stop();}else{playing=true;t0=null;playBtn.innerHTML=pauseSvg;playBtn.setAttribute('aria-label','Pause');raf=requestAnimationFrame(frame);}});
+  update(35);
+})();
+</script>
+</body>
+</html>
