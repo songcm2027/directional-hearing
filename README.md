@@ -16,13 +16,17 @@ Two earbuds sit on opposite sides of the head (~18 cm apart), forming a binaural
 
 ## Results
 
-In idealized (anechoic) simulation, the estimator reaches about **0.05° mean error** and stays accurate under heavy background noise. These are upper-bound numbers from a clean simulation — the next step is testing on reverberation and real recordings.
+- **Anechoic simulation:** about **0.05° mean error**, robust under heavy background noise.
+- **Reverberant room** (image-source simulation + short-window averaging): about **1° mean error** — the method holds up well once realistic echoes are added.
+
+These are controlled simulations with exact ground truth. The next rungs are measured head-related transfer functions and public benchmark recordings (see Roadmap).
 
 ## What's here
 
 - `direction_finder.py` — the prototype (run it to see the accuracy test and figure)
 - `direction_finder_demo.html` — an interactive demo (open in any browser; drag the slider or press play)
 - `doa_accuracy.png` — accuracy of the estimator across angles
+- `reverb_test.py` — a tougher test in a simulated reverberant room (image-source method)
 
 ## Run it
 
@@ -31,7 +35,16 @@ pip install numpy matplotlib
 python3 direction_finder.py
 ```
 
-**Try the live demo:** https://songcm2027.github.io/directional-hearing/direction_finder_demo.html
+Or just open `direction_finder_demo.html` in a browser — no install needed.
+
+## Roadmap
+
+Toward research-grade evaluation and lower error:
+
+- A stronger classical estimator (SRP-PHAT) for heavier reverberation
+- A small machine-learning model on binaural features
+- Evaluation on measured head-related transfer functions (CIPIC / SOFA)
+- Evaluation on public benchmarks (DCASE SELD / STARSS, the Wearable SELD dataset)
 
 ## Author
 
